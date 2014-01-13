@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="component" version="3.2" method="upgrade">
+	<name>com_translation</name>
+	<author>刘志勇/Jimmy</author>
+	<authorUrl>www.joomlajc.com</authorUrl>
+	<authorEmail>554511322@qq.com</authorEmail>
+	<creationDate>2014/01</creationDate>
+	<copyright>right to Jimmy</copyright>
+	<license></license>
+	<description>将joomla的组件，插件，等自动转换为中文，实现自动汉化的效果</description>
+	<version>0.0.2</version>
+	
+	<files folder="site">
+		<filename>translation.php</filename>
+		<filename>index.html</filename>
+	</files>
+	<languages folder="site">
+		<language tag="zh-CN">language/zh-CN.com_translation.ini</language>
+	</languages>
+	<administration>
+		<files folder="admin">
+			<filename>index.html</filename>
+			<filename>translation.php</filename>
+			<filename>controller.php</filename>
+			<folder>views</folder>
+			<folder>models</folder>
+		</files>
+	</administration>
+</extension>
