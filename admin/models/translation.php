@@ -11,20 +11,18 @@ defined ( "_JEXEC" ) or die ( "destricted access" );
  *       
  */
 class TranslationModelTranslation extends JModelItem {
-	
-	public $path;	
+	public $path;
 	public $tag_en;
 	public $tag_zh;
 	public $path_en;
 	public $path_zh;
-	
-	public function __construct(){
+	public function __construct() {
 		$this->path = JPATH_BASE . DS . 'language';
 		$this->tag_en = 'en-GB';
 		$this->tag_zh = 'lzy-CN';
 		$this->path_en = $this->path . DS . $this->tag_en;
 		$this->path_zh = $this->path . DS . $this->tag_zh;
-		parent::__construct();
+		parent::__construct ();
 	}
 	/**
 	 * method to create language file if not exit;
@@ -35,15 +33,16 @@ class TranslationModelTranslation extends JModelItem {
 			@mkdir ( $this->path_zh );
 			// copy all the file from en language dir
 			$this->copy_files ( $this->path_en, $this->path_zh, $this->tag_en, $this->tag_zh, $filesCopy = '' );
-		}else {
+		} else {
 			// copy the file from en language dir if not exist in zh language dir
 			$this->explode_filename ( $this->path_en, $this->path_zh, $this->tag_en, $this->tag_zh );
 		}
-		$this->insert_data($this->path_zh);
+		$values=$this->getData($this->path_zh);//$values inclued 12366 values;
+		$this->getExcute($values);
 	}
 	/**
 	 * method to copy file from $src to $dst
-	 * 
+	 *
 	 * @param $sourse the
 	 *        	source dir
 	 * @param $dest the
@@ -75,7 +74,7 @@ class TranslationModelTranslation extends JModelItem {
 	
 	/**
 	 * method to scan a dir and return the files's name if is not in the $dest dir
-	 * 
+	 *
 	 * @param $sourse the
 	 *        	source dir
 	 * @param $dest the
@@ -140,16 +139,15 @@ class TranslationModelTranslation extends JModelItem {
 	 */
 	public function filter_string($file) {
 		$arr = $this->read_file ( $file );
-		$i=0;
-		$res = array();
+		$i = 0;
+		$res = array ();
 		if (! is_null ( $arr )) {
 			foreach ( $arr as $key => $val ) {
-				if ($val == PHP_EOL || substr ( $val, 0, 1 ) == ";" ||strlen($val)<2)
+				if ($val == PHP_EOL || substr ( $val, 0, 1 ) == ";" || strlen ( $val ) < 2)
 					continue;
 				else {
-						$tmp = explode ( "=", $val, 2 );
-						$res[$i][0] = trim ( $tmp [0] );
-						$res[$i++][1] = trim ( $tmp [1] );
+					$tmp = explode ( "=", $val, 2 );
+					$res [trim ( $tmp [0] )] =  trim ( $tmp [1] );
 				}
 			}
 			return $res;
@@ -160,17 +158,19 @@ class TranslationModelTranslation extends JModelItem {
 	
 	/**
 	 * method to insert the data to the database.
-	 * @param	the language files dir to insert into the database
-	 * @return	array $values the data will insert into the database.
+	 * 
+	 * @param
+	 *        	the language files dir to insert into the database
+	 * @return array $values the data will insert into the database.
 	 */
 	public function getData($path) {
-		$files=scandir($path);
-		$values=array();
-		if(!is_null($files)){
-			foreach ($files as $file){
-				if($file!='.' && $file!='..' && substr($file, -3)=='ini'){
-					$res=$this->filter_string($path.DS.$file);
-					$values=array_merge($res,$values);//this will remove the duplicate values
+		$files = scandir ( $path );
+		$values = array ();
+		if (! is_null ( $files )) {
+			foreach ( $files as $file ) {
+				if ($file != '.' && $file != '..' && substr ( $file, - 3 ) == 'ini') {
+					$res = $this->filter_string ( $path . DS . $file );
+					$values = array_merge ( $res, $values ); // this will remove the duplicate values
 				}
 			}
 		}
@@ -178,28 +178,43 @@ class TranslationModelTranslation extends JModelItem {
 	}
 	/**
 	 * method to insert the data to the database.
-	 * @param array $values the data will insert into the database
+	 * 
+	 * @param array $values
+	 *        	the data will insert into the database
 	 * @return null
-	 * */
-	public function getInsert($values){
-		$db = JFactory::getDBO();
-		$query = $db->getQuery(true);
-		$query->insert($db->quoteName('#__translation'));
-		$query->columns($db->quoteName(array('name', 'content')));
-		foreach ($values as $value){
-			$query->values(implode(',',$db->quote($value)));
+	 *
+	 */
+	public function getInsert($values) {
+		$db = JFactory::getDBO ();
+		$query = $db->getQuery ( true );
+		$query->insert ( $db->quoteName ( '#__translation_admin' ) );
+		$query->columns ( $db->quoteName ( array (
+				'name',
+				'content' 
+		) ) );
+		foreach ($values as $key=>$value){
+			$query->values ( $db->quote($key). ','.$db->quote ( $value));	
 		}
-		$db->setQuery($query);
-		$result = $db->execute();
+		$db->setQuery ( $query );
+		$result = $db->execute ();
 	}
 	/**
-	 * 
-	 * */
-	public function getExcute($values){
-		$temp=array();
-		foreach ($values as $key=>$value){
-			
-			$temp[]=$value;
+	 * method to insert the array data into the database in the type of partition 
+	 * @param array $values
+	 */
+	public function getExcute($values) {
+		$temp = array ();
+		$i=0;
+		$num=100;
+		foreach ( $values as $key => $value ) {
+			if ($i != 0 && $i % $num == 0) {
+				$this->getInsert ( $temp );
+				unset($temp);
+			}
+			$temp[$key] = $value;
+			$i++;
 		}
+		//mandle the latest values;
+		$this->getInsert ( $temp );
 	}
 }
